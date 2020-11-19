@@ -7,5 +7,5 @@ import lombok.Setter;
 @Setter
 public class RequestScatterDTO {
 	private Long price;
-	private Long dividerNumber;
+	private int dividerNumber;
 }

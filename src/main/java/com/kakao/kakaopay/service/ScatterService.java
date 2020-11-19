@@ -1,10 +1,8 @@
 package com.kakao.kakaopay.service;
 
-import org.springframework.stereotype.Service;
+import com.kakao.kakaopay.dao.Scatter;
 
-@Service
 public interface ScatterService {
 	
-//	String scatter()
-
+	Scatter makeScatter(String userId, String roomId, Long price, int dividerNumber);
 }
