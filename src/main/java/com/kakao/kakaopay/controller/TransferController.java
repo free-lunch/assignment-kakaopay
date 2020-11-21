@@ -1,5 +1,7 @@
 package com.kakao.kakaopay.controller;
 
+import java.util.stream.Collectors;
+
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.kakao.kakaopay.dao.Scatter;
 import com.kakao.kakaopay.dto.RequestScatterDTO;
@@ -37,7 +40,6 @@ public class TransferController {
 
 	@ResponseStatus(HttpStatus.CREATED)
 	@PostMapping(value = "/scatter", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ResponseBody
 	public ResponseEntity<Object> makeScatter(
 			@RequestHeader(value="X-USER-ID") String userId,
 			@RequestHeader(value="X-ROOM-ID") String roomId,
@@ -51,14 +53,6 @@ public class TransferController {
 		return new ResponseEntity<>(response.toMap(), HttpStatus.CREATED);
 	}
 
-	@ExceptionHandler({
-		DuplicateRequestException.class,
-		ExternalUserRequestException.class,
-		MyselfRequestException.class,
-		NotExistScatterException.class,
-		TimeoutPreemptException.class
-		
-	})
 	@PutMapping(value = "/scatter/{token:[a-zA-Z]{3}}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Object> preemptScatter(
 			@RequestHeader(value="X-USER-ID") String userId,
@@ -84,7 +78,16 @@ public class TransferController {
 		JSONObject response = new JSONObject();
 		response.put("createdAt", scatter.getCreatedAt().toInstant().toString());
 		response.put("price", scatter.getPrice());
-		response.put("details", scatter.getDetails());
+		response.put("preemptedPrice", scatter.getDetails().stream()
+				.filter(d -> d.getIsPreempted())
+				.mapToLong(d -> d.getDividedPrice())
+				.sum());
+		response.put("details", scatter.getDetails().stream()
+				.filter(d -> d.getIsPreempted())
+				.collect(Collectors.toList()));
+		
+		//TODO; make response DTO
+		
 
 		return new ResponseEntity<Object>(response.toMap(), HttpStatus.OK);
 	}

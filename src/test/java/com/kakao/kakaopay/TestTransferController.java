@@ -28,14 +28,11 @@ public class TestTransferController extends BaseTest {
 	@Test
 	public void postScatterTest() throws Exception {
 		// given
-		final RequestScatterDTO dto = new RequestScatterDTO();
-		dto.setDividerNumber(3);
-		dto.setPrice(3000L);
-
+		final RequestScatterDTO request = RequestScatterDTO.of(3000L, 3);
 
 		// when
 		this.mvc.perform(post("/transfer/v1/scatter")
-				.content(this.objectMapper.writeValueAsString(dto))
+				.content(this.objectMapper.writeValueAsString(request))
 				.contentType(MediaType.APPLICATION_JSON)
 				.header("X-USER-ID", "USER-1")
 				.header("X-ROOM-ID", "ROOM-1")

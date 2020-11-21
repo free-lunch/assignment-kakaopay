@@ -45,27 +45,22 @@ public class ScatterServiceImpl implements ScatterService {
 	
 	@Override
 	public Long preemptScatterDetail(String token, String userId, String roomId) {
-		System.out.println("preemptScatterDetail");
 		Scatter scatter = this.getScatter(token, userId);
-		System.out.println("1111");
 		// Timeout for 10 minutes
 		if ((new Date()).getTime() - scatter.getCreatedAt().getTime() > 10 * 60 * 1000) {
 			System.out.println((new Date()).getTime() - scatter.getCreatedAt().getTime() );
 			throw new TimeoutPreemptException();
 		}
-		System.out.println("2222");
 		
 		// Request by owner
 		if (scatter.getOwnerUserId().equals(userId)) {
 			throw new MyselfRequestException();
 		}
-		System.out.println("3333");
 		
 		// Request by not same room
 		if (!scatter.getRoomId().equals(roomId)) {
 			throw new ExternalUserRequestException();
 		}
-		System.out.println("4444");
 
 		Long preemptedPrice = scatter.preemtDetail(userId);
 		scatterRepository.save(scatter);

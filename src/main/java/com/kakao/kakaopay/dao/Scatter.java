@@ -49,7 +49,7 @@ public class Scatter implements Serializable {
 	
 	public Long preemtDetail(String userId) {
 		for (ScatterDetail detail: this.getDetails()) {
-			if (detail.getPreemptedUserId().equals(userId))  {
+			if (userId.equals(detail.getPreemptedUserId()))  {
 				// Request by duplicated request
 				throw new DuplicateRequestException();
 			}
