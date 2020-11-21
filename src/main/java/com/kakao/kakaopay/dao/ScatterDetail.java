@@ -7,5 +7,6 @@ import lombok.Setter;
 @Setter
 public class ScatterDetail { 
 	private Long dividedPrice;
-	private String takerUserId = null;
+	private String preemptedUserId = null;
+	private Boolean isPreempted = false;
 }

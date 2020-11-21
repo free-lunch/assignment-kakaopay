@@ -1,10 +1,8 @@
 package com.kakao.kakaopay.service;
 
-import java.util.ArrayList;
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Date;
+import java.util.Optional;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -12,6 +10,11 @@ import org.springframework.stereotype.Service;
 import com.kakao.kakaopay.dao.Scatter;
 import com.kakao.kakaopay.dao.ScatterDetail;
 import com.kakao.kakaopay.dao.ScatterRepository;
+import com.kakao.kakaopay.exception.DuplicateRequestException;
+import com.kakao.kakaopay.exception.ExternalUserRequestException;
+import com.kakao.kakaopay.exception.MyselfRequestException;
+import com.kakao.kakaopay.exception.NotExistScatterException;
+import com.kakao.kakaopay.exception.TimeoutPreemptException;
 
 @Service
 public class ScatterServiceImpl implements ScatterService {
@@ -28,47 +31,70 @@ public class ScatterServiceImpl implements ScatterService {
 	@Override
 	public Scatter makeScatter(String userId, String roomId, Long price, int dividerNumber) {
 		final Scatter scatter = new Scatter();
+
 		scatter.setOwnerUserId(userId);
 		scatter.setRoomId(roomId);
-		scatter.setToken(this.makeToken(defaultTokenLength)); 
 		scatter.setDividerNumber(dividerNumber);
 		scatter.setPrice(price);
-		scatter.setDetails(this.makeScatterDetails(price, dividerNumber));
+
+		scatter.makeToken(this.defaultTokenLength);
+		scatter.makeDetails(price, dividerNumber);
 		scatterRepository.save(scatter);
 		return scatter;
 	}
 	
-	private String makeToken(int number) {
-		return RandomStringUtils.randomAlphabetic(number);
-	}
-
-	private ArrayList<ScatterDetail> makeScatterDetails(Long price, int dividerNumber) {
-		final ArrayList<ScatterDetail> details = new ArrayList<ScatterDetail>();
-		System.out.println("divderNumber");
-		System.out.println(dividerNumber);
-		System.out.println("price");
-		System.out.print(price);
-
+	@Override
+	public Long preemptScatterDetail(String token, String userId, String roomId) {
+		System.out.println("preemptScatterDetail");
+		Scatter scatter = this.getScatter(token, userId);
+		System.out.println("1111");
+		// Timeout for 10 minutes
+		if ((new Date()).getTime() - scatter.getCreatedAt().getTime() > 10 * 60 * 1000) {
+			System.out.println((new Date()).getTime() - scatter.getCreatedAt().getTime() );
+			throw new TimeoutPreemptException();
+		}
+		System.out.println("2222");
 		
-		Long mod = price - dividerNumber;
-		for (int i = 0; i < dividerNumber; i++) {
-			final ScatterDetail detail = new ScatterDetail();
-			if (i == (dividerNumber - 1)) {
-				detail.setDividedPrice(mod + 1);
-			} else {
-				final long randLong = ThreadLocalRandom.current().nextLong(0, mod);
-				detail.setDividedPrice(randLong + 1);
-				mod = mod - randLong;
-			}
-			details.add(detail);
-			System.out.println("mod");
-			System.out.println(mod);
-			System.out.println("devidedPrice");
-			System.out.println(detail.getDividedPrice());
+		// Request by owner
+		if (scatter.getOwnerUserId().equals(userId)) {
+			throw new MyselfRequestException();
+		}
+		System.out.println("3333");
+		
+		// Request by not same room
+		if (!scatter.getRoomId().equals(roomId)) {
+			throw new ExternalUserRequestException();
+		}
+		System.out.println("4444");
 
+		Long preemptedPrice = scatter.preemtDetail(userId);
+		scatterRepository.save(scatter);
+		return preemptedPrice;
+		
+	}
+	
+	@Override
+	public Scatter getScatterByOwner(String token, String userId) {
+		Scatter scatter = this.getScatter(token, userId);
+
+		if (!scatter.getOwnerUserId().equals(userId)) {
+			throw new Error();
 		}
 		
-		return details;
+		return scatter;
 	}
+
+	
+	private Scatter getScatter(String token, String userId) {
+		final Optional<Scatter> _scatter = this.scatterRepository.findById(token);
+		if (_scatter.isPresent()) {
+			return _scatter.get();
+		} else {
+			throw new NotExistScatterException();
+		}
+		
+	}
+
+
 }
     
