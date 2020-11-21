@@ -7,7 +7,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class RequestScatterDTO {
+public class ResponsePreemptScatterDTO {
 	private Long price;
-	private int dividerNumber;
 }

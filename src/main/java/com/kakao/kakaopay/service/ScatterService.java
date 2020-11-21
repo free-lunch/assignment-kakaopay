@@ -1,7 +1,6 @@
 package com.kakao.kakaopay.service;
 
 import com.kakao.kakaopay.dao.Scatter;
-import com.kakao.kakaopay.dao.ScatterDetail;
 
 public interface ScatterService {
 	

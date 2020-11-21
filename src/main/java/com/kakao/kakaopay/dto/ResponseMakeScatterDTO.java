@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class RequestScatterDTO {
-	private Long price;
-	private int dividerNumber;
+public class ResponseMakeScatterDTO {
+	private String token;
+
 }

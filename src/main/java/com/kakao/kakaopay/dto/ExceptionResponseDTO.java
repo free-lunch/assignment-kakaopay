@@ -10,9 +10,4 @@ import lombok.Setter;
 public class ExceptionResponseDTO {
 	private String errorCode;
 	private String errorMessage;
-	
-	static public ExceptionResponseDTO of(String errorCode, String errorMessage) {
-		return new ExceptionResponseDTO(errorCode, errorMessage);
-		
-	}
 }

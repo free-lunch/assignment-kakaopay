@@ -7,9 +7,12 @@ import lombok.Getter;
 
 @Getter
 @ResponseStatus(HttpStatus.BAD_REQUEST)
-public class DuplicateRequestException extends BadRequestException {
-
-	public DuplicateRequestException() {
-		super("중복된 요청 에러입니다.", "E001");
+public abstract class BadRequestException extends RuntimeException {
+	private String errorCode;
+	
+	public BadRequestException(String message, String errorCode) {
+		super(message);
+		this.errorCode = errorCode;
 	}
+
 }

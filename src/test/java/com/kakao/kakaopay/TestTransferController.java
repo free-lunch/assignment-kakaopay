@@ -28,7 +28,7 @@ public class TestTransferController extends BaseTest {
 	@Test
 	public void postScatterTest() throws Exception {
 		// given
-		final RequestScatterDTO request = RequestScatterDTO.of(3000L, 3);
+		final RequestScatterDTO request = new RequestScatterDTO(3000L, 3);
 
 		// when
 		this.mvc.perform(post("/transfer/v1/scatter")

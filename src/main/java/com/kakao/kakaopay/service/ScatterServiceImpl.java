@@ -8,9 +8,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import com.kakao.kakaopay.dao.Scatter;
-import com.kakao.kakaopay.dao.ScatterDetail;
 import com.kakao.kakaopay.dao.ScatterRepository;
-import com.kakao.kakaopay.exception.DuplicateRequestException;
 import com.kakao.kakaopay.exception.ExternalUserRequestException;
 import com.kakao.kakaopay.exception.MyselfRequestException;
 import com.kakao.kakaopay.exception.NotExistScatterException;
