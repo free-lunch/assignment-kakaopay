@@ -47,25 +47,6 @@ public class Scatter implements Serializable {
 		this.setToken(RandomStringUtils.randomAlphabetic(number));
 	}
 	
-	public Long preemtDetail(String userId) {
-		for (ScatterDetail detail: this.getDetails()) {
-			if (userId.equals(detail.getPreemptedUserId()))  {
-				// Request by duplicated request
-				throw new DuplicateRequestException();
-			}
-
-			// Preempt price
-			if (!detail.getIsPreempted()) {
-				detail.setIsPreempted(true);
-				detail.setPreemptedUserId(userId);
-				return detail.getDividedPrice();
-			}
-		}
-		
-		// Make exception
-		throw new FullPreemptException();
-	}
-	
 	/**
 	 * 주어진 금액을 인원수대로 나눈다. 모든 인원은 1원이상을 받을 수 있도록 계산되었으며, 최소 단위는 1원이다.
 	 * @param price 나누길 원하는 총 금액 

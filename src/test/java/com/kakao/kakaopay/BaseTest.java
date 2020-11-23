@@ -37,7 +37,10 @@ abstract public class BaseTest {
 		scatter.setRoomId(this.stubRoomId);
 		scatter.setDividerNumber(this.stubDividerNumber);
 		scatter.makeDetails(this.stubPrice, this.stubDividerNumber);
-		scatter.preemtDetail(this.stubPreemtUserId);
+		
+		scatter.getDetails().get(0).setIsPreempted(true);
+		scatter.getDetails().get(0).setPreemptedUserId(this.stubPreemtUserId);
+		
 		return Optional.ofNullable(scatter);
 		
 	}

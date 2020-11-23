@@ -2,14 +2,21 @@ package com.kakao.kakaopay.service;
 
 import java.util.Date;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
+import org.redisson.api.RedissonClient;
+import org.redisson.api.RLock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import com.kakao.kakaopay.dao.Scatter;
+import com.kakao.kakaopay.dao.ScatterDetail;
 import com.kakao.kakaopay.dao.ScatterRepository;
+import com.kakao.kakaopay.exception.DuplicateRequestException;
 import com.kakao.kakaopay.exception.ExternalUserRequestException;
+import com.kakao.kakaopay.exception.FullPreemptException;
+import com.kakao.kakaopay.exception.InvalidOwnerRequestExpection;
 import com.kakao.kakaopay.exception.MyselfRequestException;
 import com.kakao.kakaopay.exception.NotExistScatterException;
 import com.kakao.kakaopay.exception.TimeoutPreemptException;
@@ -23,13 +30,17 @@ public class ScatterServiceImpl implements ScatterService {
 	@Autowired
 	ScatterRepository scatterRepository;
 	
+	@Autowired
+	RedissonClient redissonClient;
+	
 	private int defaultTokenLength = 3;
 
 
 	@Override
 	public Scatter makeScatter(String userId, String roomId, Long price, int dividerNumber) {
 		final Scatter scatter = new Scatter();
-
+		
+		
 		scatter.setOwnerUserId(userId);
 		scatter.setRoomId(roomId);
 		scatter.setDividerNumber(dividerNumber);
@@ -37,8 +48,7 @@ public class ScatterServiceImpl implements ScatterService {
 
 		scatter.makeToken(this.defaultTokenLength);
 		scatter.makeDetails(price, dividerNumber);
-		scatterRepository.save(scatter);
-		return scatter;
+		return scatterRepository.save(scatter);
 	}
 	
 	@Override
@@ -59,9 +69,44 @@ public class ScatterServiceImpl implements ScatterService {
 		if (!scatter.getRoomId().equals(roomId)) {
 			throw new ExternalUserRequestException();
 		}
+		
+		// Redis lock
+		RLock lock = this.redissonClient.getLock(token);
+		Long preemptedPrice = null;
 
-		Long preemptedPrice = scatter.preemtDetail(userId);
-		scatterRepository.save(scatter);
+		try {
+			boolean res = lock.tryLock(60, 10, TimeUnit.SECONDS);
+			if (!res) {
+				throw new RuntimeException("락 획득에 실패하였습니다.");
+			}
+
+			for (ScatterDetail detail: scatter.getDetails()) {
+				if (userId.equals(detail.getPreemptedUserId()))  {
+					// Request by duplicated request
+					throw new DuplicateRequestException();
+				}
+
+				// Preempt price
+				if (!detail.getIsPreempted()) {
+					detail.setIsPreempted(true);
+					detail.setPreemptedUserId(userId);
+					preemptedPrice = detail.getDividedPrice();
+					break;
+				}
+			}
+			
+			if (preemptedPrice == null) {
+				throw new FullPreemptException();
+			}
+			scatterRepository.save(scatter);
+			
+		} catch (InterruptedException e) {
+			throw new Error("락 획득 과정에서 오류가 발생 하였습니다.");
+			
+		}finally {
+			lock.unlock();
+		}
+
 		return preemptedPrice;
 		
 	}
@@ -71,7 +116,7 @@ public class ScatterServiceImpl implements ScatterService {
 		Scatter scatter = this.getScatter(token, userId);
 
 		if (!scatter.getOwnerUserId().equals(userId)) {
-			throw new Error();
+			throw new InvalidOwnerRequestExpection();
 		}
 		
 		return scatter;

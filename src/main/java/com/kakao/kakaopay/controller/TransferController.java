@@ -33,7 +33,6 @@ public class TransferController {
 	private ScatterService scatterService;
 
 
-	@ResponseStatus(HttpStatus.CREATED)
 	@PostMapping(value = "/scatter", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<ResponseMakeScatterDTO> makeScatter(
 			@RequestHeader(value="X-USER-ID") String userId,
